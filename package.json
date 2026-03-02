@@ -1,0 +1,91 @@
+{
+  "name": "ide-memory-system-anderson",
+  "displayName": "AI Memory System - 三层智能记忆插件",
+  "description": "基于OpenClaw三层记忆架构的智能记忆系统，支持智能筛选、自动检索、压缩整理和可视化界面。让AI助手拥有长期记忆能力！",
+  "version": "1.0.0",
+  "publisher": "anderson-memory-tech",
+  "author": {
+    "name": "Anderson Memory Technology",
+    "email": "contact@anderson-memory.tech",
+    "url": "https://anderson-memory.tech"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "AI",
+    "Programming Languages", 
+    "Other"
+  ],
+  "keywords": [
+    "memory",
+    "ai",
+    "intelligent",
+    "smart",
+    "recall",
+    "retrieval",
+    "compression",
+    "visualization"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "memory-system.showMemoryPanel",
+        "title": "Show Memory Panel",
+        "category": "Memory System"
+      },
+      {
+        "command": "memory-system.listRecentMemories",
+        "title": "List Recent Memories",
+        "category": "Memory System"
+      },
+      {
+        "command": "memory-system.showStats",
+        "title": "Show Memory Stats",
+        "category": "Memory System"
+      }
+    ],
+    "configuration": {
+      "title": "Memory System",
+      "properties": {
+        "memorySystem.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable the memory system"
+        },
+        "memorySystem.storagePaths.project": {
+          "type": "string",
+          "default": ".memory/",
+          "description": "Project-level memory storage path"
+        },
+        "memorySystem.storagePaths.user": {
+          "type": "string", 
+          "default": "~/.ide-memory/",
+          "description": "User-level memory storage path"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "node compile.js",
+    "watch": "node compile.js --watch"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.60.0",
+    "@types/node": "16.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anderson-memory-tech/ide-memory-system"
+  },
+  "bugs": {
+    "url": "https://github.com/anderson-memory-tech/ide-memory-system/issues"
+  },
+  "homepage": "https://anderson-memory.tech/ide-memory-system"
+}

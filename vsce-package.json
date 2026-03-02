@@ -1,0 +1,68 @@
+{
+  "name": "ide-memory-system",
+  "displayName": "IDE Memory System",
+  "description": "基于OpenClaw三层记忆架构的轻量级记忆系统插件",
+  "version": "1.0.0",
+  "publisher": "memory-system-team",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "memory-system.showMemoryPanel",
+        "title": "显示记忆面板",
+        "category": "记忆系统"
+      },
+      {
+        "command": "memory-system.listRecentMemories",
+        "title": "查看最近记忆",
+        "category": "记忆系统"
+      },
+      {
+        "command": "memory-system.showStats",
+        "title": "显示统计信息",
+        "category": "记忆系统"
+      }
+    ],
+    "configuration": {
+      "title": "记忆系统",
+      "properties": {
+        "memorySystem.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "启用/禁用记忆系统"
+        },
+        "memorySystem.storagePaths.project": {
+          "type": "string",
+          "default": ".memory/",
+          "description": "项目级记忆存储路径"
+        },
+        "memorySystem.storagePaths.user": {
+          "type": "string", 
+          "default": "~/.ide-memory/",
+          "description": "用户级记忆存储路径"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "echo 'Packaging extension...'",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.60.0",
+    "@types/node": "16.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-repo/ide-memory-system"
+  }
+}
