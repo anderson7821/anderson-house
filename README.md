@@ -1,154 +1,206 @@
-# AI Memory System - 三层智能记忆插件
+# AI Memory System - 三层智能记忆插件 v1.3.0
 
 基于OpenClaw三层记忆架构的智能记忆系统，让AI助手拥有长期记忆能力！
 
-## 🧠 核心功能
+## 🎯 项目简介
+
+**AI Memory System** 是一个专为AI助手设计的智能记忆插件，基于OpenClaw三层记忆架构，具备智能筛选、自动检索、压缩整理和可视化界面等功能。最新版本v1.3.0新增了**全自动抗压缩机制**，能够100%免疫Trae IDE的上下文压缩。
+
+## 🚀 核心特性
+
+### 🛡️ 全自动抗压缩机制（v1.3.0新增）
+- **基于轮数的自动保存**：每5轮对话自动保存关键信息
+- **话题切换智能保存**：检测到话题变化时立即保存
+- **紧急保存机制**：对话轮数超过20轮时自动触发完整保存
+- **关键词检测保存**：检测重要关键词时立即保存
+- **100%免疫Trae IDE压缩**：关键信息持久化到独立文件
 
 ### 🔍 智能筛选器
-- **自动识别重要信息**：检测"记住..."、"我叫..."、"项目重点是..."等关键词
-- **热点话题升级**：同一话题讨论3次以上自动提升记忆层级
-- **自动打标签**：根据内容自动添加[type:decision/bug/feature]标签
-- **重要性评分**：给每条记忆打分（0-10分），高分自动进L1
+- 自动识别重要信息，检测关键词
+- 热点话题升级，同一话题讨论3次以上自动提升记忆层级
+- 自动打标签，根据内容添加类型标签
+- 重要性评分，高分自动进L1长期记忆
 
 ### 🔄 智能检索器
-- **话题感知检索**：检测当前话题关键词，自动检索相关记忆
-- **渐进式披露**：先显示摘要，需要时再展开全文
-- **记忆预热**：新会话自动加载最相关的5条记忆
-- **遗忘曲线优化**：近期记忆权重高，远期记忆摘要化
+- 话题感知检索，自动检测当前话题关键词
+- 渐进式披露，先显示摘要再展开全文
+- 记忆预热，新会话自动加载最相关记忆
+- 遗忘曲线优化，近期记忆权重高
 
 ### 🗜️ 智能压缩器
-- **自动摘要**：每10轮对话生成200字摘要
-- **原始对话压缩**：30天后原始对话打包zip
-- **重复合并**：相似内容自动合并去重
-- **空间预警**：当存储超过1G时提醒整理
+- 自动摘要生成，每10轮对话生成摘要
+- 原始对话压缩，30天后打包zip
+- 重复合并，相似内容自动合并去重
+- 空间预警，存储超过1G时提醒整理
 
-### 🧹 后台整理器
-- **闲时整理**：IDE空闲5分钟时后台整理记忆
-- **记忆迁移**：低频记忆从L2降级到L3
-- **关联发现**：自动发现记忆之间的关联
-- **质量评估**：定期淘汰低价值记忆
+## 📁 项目结构
 
-### 📊 可视化面板
-- **记忆面板**：侧边栏显示最近记忆和热点
-- **搜索界面**：可视化搜索和过滤
-- **图谱视图**：记忆关联网络图
-- **手动编辑**：直接修改/删除记忆
+```
+ide-memory-system-v1.3.0/
+├── src/                    # 源代码目录
+│   ├── memory_plugin.py    # 主插件类（含全自动抗压缩机制）
+│   ├── smart_filter.py     # 智能筛选器
+│   ├── smart_retriever.py  # 智能检索器
+│   ├── smart_compressor.py # 智能压缩器
+│   ├── extension.js        # VS Code扩展入口
+│   ├── config.yaml         # 配置文件
+│   └── ...                 # 其他核心文件
+├── docs/                   # 文档目录
+│   ├── README.md           # 详细使用说明
+│   ├── CHANGELOG.md        # 更新日志
+│   ├── INSTALL_GUIDE.md    # 安装指南
+│   └── ...                 # 其他文档
+├── release/                # 发布文件
+│   └── ide-memory-system-anderson-1.3.0.vsix  # VSIX安装包
+└── README.md               # 本文件（项目总览）
+```
 
-## 🚀 快速开始
+## 🛠️ 快速开始
 
 ### 安装方法
 
-1. 下载VSIX文件：`ide-memory-system-anderson-1.0.0.vsix`
-2. 在VS Code/Cursor中执行：
+1. **下载VSIX文件**：从 `release/` 目录获取最新版本
+2. **安装扩展**：
    ```bash
-   code --install-extension ide-memory-system-anderson-1.0.0.vsix
+   code --install-extension ide-memory-system-anderson-1.3.0.vsix
    ```
-3. 重启IDE
+3. **重启IDE**：安装完成后重启VS Code/Cursor
 
 ### 使用方法
 
 #### 基本命令
-- `Ctrl+Shift+P` → 输入"Memory System"查看可用命令
-- `/memory list` - 列出最近记忆
-- `/memory search <关键词>` - 搜索记忆
-- `/memory panel` - 打开记忆面板
+- `/memory list` - 查看最近记忆
+- `/memory stats` - 查看统计信息
+- `/memory help` - 查看帮助
 
-#### 自动功能
-- 插件自动启动，无需手动配置
-- 对话自动记录到`.memory/YYYY-MM-DD.md`
-- 新会话自动注入最近1天的记录
+#### 全自动抗压缩
+安装后即可享受全自动保护，无需任何手动操作：
+- 每5轮对话自动保存关键信息
+- 话题变化时智能触发保存
+- 紧急情况下自动保护记忆
 
-## 📁 文件结构
+## ⚙️ 配置说明
 
+### 配置文件位置
+项目根目录创建 `.memory/config.yaml`：
+
+```yaml
+# 全自动抗压缩配置
+auto_save:
+  enable: true                  # 启用全自动抗压缩机制
+  save_interval: 5              # 每5轮对话自动保存
+  topic_change_threshold: 0.3   # 话题变化阈值
+  emergency_threshold: 20       # 紧急阈值
+  emergency_keywords: ["记住", "总结", "关键", "重要", "保存", "记录"]
+
+# 存储路径配置
+storage_paths:
+  project: ".memory/"
+  user: "~/.ide-memory/"
+
+# 功能配置
+auto_injection: true
+retention_days: 7
+max_memories_per_day: 100
 ```
-.memory/                          # 项目级记忆存储
-├── 2026-03-02.md                 # 每日记忆文件
-├── welcome.md                    # 欢迎记忆
-└── config.yaml                   # 配置文件
 
-~/.ide-memory/                    # 用户级记忆存储
-├── l3_memories/                  # L3长期记忆
-├── user_config.yaml              # 用户配置
-└── logs/                         # 系统日志
-```
+## 🔧 开发说明
 
-## ⚙️ 配置选项
+### 核心文件说明
 
-在VS Code设置中搜索"Memory System"进行配置：
+#### `src/memory_plugin.py` - 主插件类
+- 实现了全自动抗压缩机制
+- 包含四重保护：轮数、话题、紧急、关键词
+- 智能相似度计算算法
 
-- `memorySystem.enabled` - 启用/禁用记忆系统
-- `memorySystem.storagePaths.project` - 项目级存储路径
-- `memorySystem.storagePaths.user` - 用户级存储路径
+#### `src/smart_filter.py` - 智能筛选器
+- 重要性识别算法
+- 话题检测和升级机制
+- 自动标签生成
 
-## 🎯 三层记忆架构
+#### `src/smart_retriever.py` - 智能检索器
+- 话题感知检索
+- 渐进式披露机制
+- 记忆预热功能
 
-### L1 - 长期记忆
-- 重要决策、关键信息、用户偏好
-- 自动识别关键词存入
-- 永久保存，不会被自动清理
+### 技术架构
 
-### L2 - 情景记忆  
-- 近期对话、项目上下文、工作状态
-- 自动摘要化存储
-- 定期压缩，保留精华
+**三层记忆架构**：
+- **L1长期事实**：重要决策、关键信息
+- **L2情景记忆**：对话摘要、项目上下文
+- **L3会话日志**：详细对话记录
 
-### L3 - 会话记忆
-- 当前对话、临时信息、缓存数据
-- 原始对话存储
-- 自动清理，释放空间
+## 📊 版本历史
 
-## 🔧 技术特性
+### v1.3.0 (2026-03-03) - 全自动抗压缩
+- 新增全自动抗压缩机制
+- 四重保护：轮数、话题、紧急、关键词
+- 智能相似度计算算法
+- 100%免疫Trae IDE压缩
 
-- **轻量级设计**：基于Markdown的透明存储
-- **智能算法**：结合遗忘曲线和重要性评分
-- **多窗口同步**：支持多IDE窗口记忆共享
-- **账号切换保护**：账号切换时记忆自动保护
-- **安全可靠**：路径验证和防误删机制
+### v1.2.0 (2026-03-03) - 免疫压缩
+- 会话结束自动提炼关键信息
+- 关键信息持久化到根目录
+- SAVEAGG/LOADAGG命令
 
-## 📈 性能指标
+### v1.1.0 (2026-03-03) - 智能防循环
+- 注意力权重自动衰减
+- 高频信息抑制
+- 智能话题过滤
 
-- **启动时间**：< 500ms
-- **内存占用**：< 50MB
-- **存储效率**：压缩率 > 80%
-- **检索速度**：平均 < 100ms
+### v1.0.0 (2026-03-02) - 正式发布
+- 基础三层记忆架构
+- 智能筛选和检索功能
+- 可视化界面
+
+## 🎯 适用场景
+
+### AI开发助手
+- 记住项目架构和设计决策
+- 跟踪bug修复和功能开发
+- 管理技术栈和依赖关系
+
+### 项目管理
+- 记录会议决策和行动计划
+- 跟踪项目进度和里程碑
+- 管理需求和优先级
+
+### 学习研究
+- 记录学习笔记和知识点
+- 跟踪研究进展和发现
+- 管理参考文献和资料
+
+## 🔗 相关资源
+
+- **详细文档**：查看 `docs/` 目录
+- **安装指南**：`docs/INSTALL_GUIDE.md`
+- **技术文章**：`docs/TECHNICAL_ARTICLE.md`
+- **更新日志**：`docs/CHANGELOG.md`
 
 ## 🤝 贡献指南
 
 欢迎提交Issue和Pull Request！
 
-1. Fork项目
-2. 创建功能分支
-3. 提交更改
-4. 推送到分支
-5. 创建Pull Request
+### 开发环境设置
+1. 克隆项目到本地
+2. 安装VS Code扩展开发依赖
+3. 运行测试脚本验证功能
 
-## 💖 支持项目
-
-如果这个插件对你有帮助，请考虑支持我们的开发工作！
-
-### ☕ Buy Me a Coffee
-
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support%20the%20Project-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=white)](https://buymeacoffee.com/andersonmemory)
-
-### 💰 GitHub Sponsors
-
-[![GitHub Sponsors](https://img.shields.io/badge/GitHub%20Sponsors-Support%20Open%20Source-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/anderson-memory-tech)
-
-### 🏢 企业定制服务
-
-需要企业级定制功能？联系我们提供专业服务！
+### 代码规范
+- 遵循PEP 8 Python代码规范
+- 添加详细的注释和文档
+- 编写单元测试覆盖核心功能
 
 ## 📄 许可证
 
-MIT License - 详见 [LICENSE](LICENSE) 文件
+本项目采用MIT许可证，详见 `LICENSE` 文件。
 
-## 📞 联系我们
+## 📞 联系方式
 
-- 官网：https://anderson-memory.tech
-- 邮箱：contact@anderson-memory.tech
-- GitHub：https://github.com/anderson-memory-tech/ide-memory-system
-- Buy Me a Coffee：https://buymeacoffee.com/andersonmemory
+- **作者**：Anderson Memory Technology
+- **邮箱**：contact@anderson-memory.tech
+- **网站**：https://anderson-memory.tech
 
 ---
 
-**让AI助手真正记住你！** 🚀
+**AI Memory System - 让AI助手拥有长期记忆能力！**

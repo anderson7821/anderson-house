@@ -2,7 +2,7 @@
   "name": "ide-memory-system-anderson",
   "displayName": "AI Memory System - 三层智能记忆插件",
   "description": "基于OpenClaw三层记忆架构的智能记忆系统，支持智能筛选、自动检索、压缩整理和可视化界面。让AI助手拥有长期记忆能力！",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "publisher": "anderson-memory-tech",
   "author": {
     "name": "Anderson Memory Technology",

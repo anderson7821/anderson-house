@@ -1,0 +1,108 @@
+# IDE三层记忆系统配置
+# 基于OpenClaw三层记忆架构的轻量级实现
+
+# 存储路径配置
+storage_paths:
+  # 项目级记忆存储（L1长期事实 + L2情景记忆）
+  project: ".memory/"
+  # 用户级记忆存储（L3会话日志 + 插件配置）
+  user: "~/.ide-memory/"
+
+# 功能配置
+auto_injection: true           # 是否自动注入最近记忆
+retention_days: 7              # 记忆保留天数
+max_memories_per_day: 100      # 每日最大记忆数量
+
+# 检索配置
+search_enabled: true           # 是否启用搜索功能
+max_search_results: 10         # 最大搜索结果数量
+
+# 智能筛选器配置（基于用户建议）
+smart_filter:
+  # 重要性识别配置
+  importance_detection: true    # 启用重要性识别
+  high_importance_patterns: ["记住：", "我叫：", "项目重点是：", "重要：", "关键：", "必须："]
+  topic_repetition_threshold: 3 # 话题重复阈值（3次升级为L1）
+  
+  # 自动检索配置
+  auto_retrieve_days: 3         # 自动检索最近N天记忆
+  relevance_threshold: 0.5      # 相关性阈值
+  
+  # 摘要生成配置
+  auto_summarize_after_rounds: 10  # 每10轮自动生成摘要
+  summary_max_length: 100       # 摘要最大长度
+  
+  # 压缩存储配置
+  compression_enabled: true     # 启用对话压缩
+  compress_after_days: 30       # 30天前的对话自动压缩
+  keep_original: false          # 压缩后是否保留原始文件
+  
+  # 睡眠整理配置
+  sleep_organization: true      # 启用睡眠整理
+  merge_similar_memories: true  # 合并相似记忆
+  clean_old_memories: true      # 清理旧记忆
+
+# 智能检索器配置（阶段二升级）
+smart_retriever:
+  # 检索配置
+  max_results: 5                # 最大检索结果数
+  preview_length: 100          # 预览文本长度
+
+# 全自动抗压缩配置（v1.3.0新增）
+auto_save:
+  enable: true                  # 启用全自动抗压缩机制
+  save_interval: 5              # 每5轮对话自动保存
+  topic_change_threshold: 0.3   # 话题变化阈值（相似度<0.3时触发保存）
+  emergency_threshold: 20       # 紧急阈值（20轮触发紧急保存）
+  emergency_keywords: ["记住", "总结", "关键", "重要", "保存", "记录"]  # 紧急保存关键词
+  
+  # 话题检测配置
+  topic_detection_enabled: true # 启用话题检测
+  
+  # 遗忘曲线配置
+  forgetting_curve:
+    today: 1.0      # 今天 - 权重最高
+    yesterday: 0.8   # 昨天 - 权重较高
+    this_week: 0.6   # 本周 - 权重中等
+    last_week: 0.4   # 上周 - 权重较低
+    this_month: 0.2  # 本月 - 权重低
+    older: 0.1        # 更早 - 权重最低
+
+# 智能压缩器配置（阶段三升级）
+smart_compressor:
+  # 摘要配置
+  auto_summary_rounds: 10      # 每10轮对话生成摘要
+  summary_max_length: 200      # 摘要最大长度200字
+  
+  # 压缩配置
+  compress_after_days: 30      # 30天后压缩原始对话
+  space_warning_threshold: 1024 # 1GB空间预警
+  similarity_threshold: 0.8    # 相似度阈值80%
+  keep_original: false         # 压缩后是否保留原始文件
+
+# 后台整理器配置（阶段四升级）
+background_organizer:
+  # 闲时整理配置
+  idle_threshold_minutes: 5      # 空闲5分钟后开始整理
+  migration_threshold_days: 7    # 7天未访问的记忆降级
+  quality_evaluation_days: 30    # 30天评估记忆质量
+  low_quality_threshold: 0.3     # 质量评分低于0.3淘汰
+  association_discovery_enabled: true  # 启用关联发现
+  max_background_time_minutes: 10  # 最大后台运行时间10分钟
+
+# 可视化面板配置（阶段五升级）
+visualization_panel:
+  # 侧边栏配置
+  recent_memories_count: 10      # 最近记忆显示数量
+  hot_topics_count: 5            # 热点话题显示数量
+  search_results_limit: 20        # 搜索结果限制
+  graph_max_nodes: 50             # 图谱最大节点数
+  auto_refresh_seconds: 30        # 自动刷新间隔（秒）
+
+# 压缩配置（阶段2功能）
+compression_enabled: false     # 是否启用记忆压缩
+auto_compression_days: 30      # 自动压缩间隔天数
+
+# 调试配置
+debug_mode: false              # 调试模式
+log_level: "INFO"              # 日志级别

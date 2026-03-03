@@ -36,6 +36,13 @@ class MemoryPlugin:
         self.conversation_history = []  # 完整的对话历史，用于话题检测
         self.last_compression_check = None  # 上次压缩检查时间
         
+        # 全自动抗压缩机制 - 新增属性
+        self.auto_save_enabled = True  # 默认启用自动保存
+        self.conversation_round_count = 0  # 对话轮数计数器
+        self.last_user_input = ""  # 上一轮用户输入，用于话题检测
+        self.last_save_round = 0  # 上次保存的轮数
+        self.emergency_keywords = ["记住", "总结", "关键", "重要", "保存", "记录"]  # 紧急保存关键词
+        
     def initialize(self, config_path: Optional[str] = None) -> bool:
         """初始化插件"""
         try:
@@ -86,7 +93,7 @@ class MemoryPlugin:
     
     def on_user_input(self, user_input: str, ai_response: str, 
                      metadata: Optional[Dict] = None) -> Tuple[bool, Optional[str]]:
-        """用户输入钩子 - 智能记录对话 + 话题检测 + 防循环检测 + 后台整理"""
+        """用户输入钩子 - 智能记录对话 + 话题检测 + 防循环检测 + 后台整理 + 全自动抗压缩"""
         if not self.is_initialized:
             return False, None
         
@@ -140,9 +147,18 @@ class MemoryPlugin:
                 self.conversation_buffer.append(memory_record)
                 self.conversation_history.append(memory_record)
                 
+                # 更新对话轮数计数器
+                self.conversation_round_count += 1
+                
+                # 🛡️ 全自动抗压缩机制 - 开始执行
+                self._execute_auto_compression_protection(user_input)
+                
                 # 每10轮自动生成摘要
                 if len(self.conversation_buffer) >= 10:
                     self._auto_generate_summary()
+            
+            # 更新上一轮用户输入
+            self.last_user_input = user_input
             
             # 返回保存结果和防循环提醒
             return success, loop_reminder
@@ -257,7 +273,7 @@ class MemoryPlugin:
             print(f"[MemoryPlugin] 压缩检查失败: {e}")
     
     def on_session_end(self):
-        """会话结束钩子 - 触发压缩检查 + 启动后台整理"""
+        """会话结束钩子 - 触发压缩检查 + 启动后台整理 + 关键信息持久化"""
         if not self.is_initialized:
             return
         
@@ -268,6 +284,9 @@ class MemoryPlugin:
             # 如果对话缓冲区有内容，生成最终摘要
             if self.conversation_buffer:
                 self._auto_generate_summary()
+            
+            # 关键信息提炼和持久化（免疫Trae IDE上下文压缩）
+            self._extract_and_persist_key_information()
             
             # 启动后台整理（睡眠中工作）
             if self.background_organizer:
@@ -573,3 +592,306 @@ class MemoryPlugin:
         
         self.storage.save_welcome_message(welcome_content)
         print("[MemoryPlugin] 首次运行设置完成")
+    
+    def _execute_auto_compression_protection(self, current_user_input: str) -> None:
+        """执行全自动抗压缩保护机制"""
+        if not self.auto_save_enabled:
+            return
+            
+        try:
+            # 获取自动保存配置
+            auto_save_config = self.config.get('auto_save', {
+                'enable': True,
+                'save_interval': 5,
+                'topic_change_threshold': 0.3,
+                'emergency_threshold': 20
+            })
+            
+            save_interval = auto_save_config.get('save_interval', 5)
+            topic_threshold = auto_save_config.get('topic_change_threshold', 0.3)
+            emergency_threshold = auto_save_config.get('emergency_threshold', 20)
+            
+            # 1. 基于轮数的自动保存
+            if self.conversation_round_count - self.last_save_round >= save_interval:
+                print(f"🛡️  [自动保存] 基于轮数触发 (第{self.conversation_round_count}轮)")
+                self._extract_and_persist_key_information()
+                self.last_save_round = self.conversation_round_count
+                return
+            
+            # 2. 基于话题切换的智能保存
+            if self.last_user_input:
+                similarity = self._calculate_text_similarity(self.last_user_input, current_user_input)
+                if similarity < topic_threshold:
+                    print(f"🛡️  [自动保存] 话题变化触发 (相似度: {similarity:.2f})")
+                    self._extract_and_persist_key_information()
+                    self.last_save_round = self.conversation_round_count
+                    return
+            
+            # 3. 紧急保存机制
+            if self.conversation_round_count >= emergency_threshold:
+                print(f"🛡️  [自动保存] 紧急阈值触发 (第{self.conversation_round_count}轮)")
+                self._extract_and_persist_key_information()
+                self.last_save_round = self.conversation_round_count
+                return
+            
+            # 4. 关键词检测紧急保存
+            if self._contains_emergency_keywords(current_user_input):
+                print("🛡️  [自动保存] 关键词检测触发")
+                self._extract_and_persist_key_information()
+                self.last_save_round = self.conversation_round_count
+                return
+                
+        except Exception as e:
+            print(f"[MemoryPlugin] 自动压缩保护执行失败: {e}")
+    
+    def _calculate_text_similarity(self, text1: str, text2: str) -> float:
+        """计算两个文本的相似度（简化版）"""
+        if not text1 or not text2:
+            return 0.0
+        
+        # 简单的基于共同词汇的相似度计算
+        words1 = set(text1.lower().split())
+        words2 = set(text2.lower().split())
+        
+        if not words1 or not words2:
+            return 0.0
+        
+        intersection = len(words1.intersection(words2))
+        union = len(words1.union(words2))
+        
+        return intersection / union if union > 0 else 0.0
+    
+    def _contains_emergency_keywords(self, text: str) -> bool:
+        """检测是否包含紧急保存关键词"""
+        text_lower = text.lower()
+        for keyword in self.emergency_keywords:
+            if keyword.lower() in text_lower:
+                return True
+        return False
+    
+    def _extract_and_persist_key_information(self) -> None:
+        """提取并持久化关键信息（免疫Trae IDE上下文压缩）"""
+        try:
+            # 检查是否有对话内容
+            if not self.conversation_buffer:
+                print("[MemoryPlugin] 无对话内容，跳过关键信息提取")
+                return
+            
+            # 分析对话内容，提取最多5条关键信息
+            key_points = self._analyze_conversation_for_key_points()
+            
+            if key_points:
+                # 将关键信息持久化到根目录的memory.md文件
+                self._save_key_points_to_memory_md(key_points)
+                print(f"[MemoryPlugin] 已提取并持久化{len(key_points)}条关键信息")
+            else:
+                print("[MemoryPlugin] 未提取到关键信息")
+                
+        except Exception as e:
+            print(f"[MemoryPlugin] 关键信息提取失败: {e}")
+    
+    def _analyze_conversation_for_key_points(self) -> List[Dict]:
+        """分析对话内容，提取关键信息点"""
+        key_points = []
+        
+        # 合并对话内容进行分析
+        conversation_text = "\n".join([
+            f"用户: {entry.get('user_input', '')}\nAI: {entry.get('ai_response', '')}"
+            for entry in self.conversation_buffer
+        ])
+        
+        # 分析技术决策
+        tech_decisions = self._extract_technical_decisions(conversation_text)
+        if tech_decisions:
+            key_points.extend(tech_decisions)
+        
+        # 分析Bug修复
+        bug_fixes = self._extract_bug_fixes(conversation_text)
+        if bug_fixes:
+            key_points.extend(bug_fixes)
+        
+        # 分析任务完成状态
+        task_completions = self._extract_task_completions(conversation_text)
+        if task_completions:
+            key_points.extend(task_completions)
+        
+        # 分析重要配置变更
+        config_changes = self._extract_config_changes(conversation_text)
+        if config_changes:
+            key_points.extend(config_changes)
+        
+        # 分析API相关决策
+        api_decisions = self._extract_api_decisions(conversation_text)
+        if api_decisions:
+            key_points.extend(api_decisions)
+        
+        # 限制最多5条关键信息
+        return key_points[:5]
+    
+    def _extract_technical_decisions(self, conversation_text: str) -> List[Dict]:
+        """提取技术决策"""
+        decisions = []
+        
+        # 检测技术决策关键词
+        tech_keywords = [
+            '决定', '选择', '采用', '使用', '实现', '架构', '设计',
+            '方案', '策略', '方法', '框架', '库', '工具'
+        ]
+        
+        lines = conversation_text.split('\n')
+        for i, line in enumerate(lines):
+            if any(keyword in line for keyword in tech_keywords):
+                # 检查是否是技术决策（有具体内容）
+                if len(line) > 20 and ('API' in line or '配置' in line or '架构' in line):
+                    decisions.append({
+                        'type': '技术决策',
+                        'content': line.strip(),
+                        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M')
+                    })
+        
+        return decisions
+    
+    def _extract_bug_fixes(self, conversation_text: str) -> List[Dict]:
+        """提取Bug修复"""
+        fixes = []
+        
+        # 检测Bug修复关键词
+        bug_keywords = [
+            '修复', '解决', '错误', 'bug', '问题', '异常', '故障',
+            '修正', '调试', '排查', '修复了', '解决了'
+        ]
+        
+        lines = conversation_text.split('\n')
+        for i, line in enumerate(lines):
+            if any(keyword in line for keyword in bug_keywords):
+                # 检查是否是Bug修复（有具体描述）
+                if len(line) > 15 and ('导入' in line or '配置' in line or '连接' in line):
+                    fixes.append({
+                        'type': 'Bug修复',
+                        'content': line.strip(),
+                        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M')
+                    })
+        
+        return fixes
+    
+    def _extract_task_completions(self, conversation_text: str) -> List[Dict]:
+        """提取任务完成状态"""
+        completions = []
+        
+        # 检测任务完成关键词
+        task_keywords = [
+            '完成', '结束', '实现', '部署', '发布', '测试通过',
+            '验证', '确认', '搞定', '解决', '成功'
+        ]
+        
+        lines = conversation_text.split('\n')
+        for i, line in enumerate(lines):
+            if any(keyword in line for keyword in task_keywords):
+                # 检查是否是任务完成（有具体任务描述）
+                if len(line) > 20 and ('扫描' in line or '生成' in line or '配置' in line):
+                    completions.append({
+                        'type': '任务完成',
+                        'content': line.strip(),
+                        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M')
+                    })
+        
+        return completions
+    
+    def _extract_config_changes(self, conversation_text: str) -> List[Dict]:
+        """提取重要配置变更"""
+        changes = []
+        
+        # 检测配置变更关键词
+        config_keywords = [
+            '配置', '设置', '密钥', 'API', '环境变量', '参数',
+            '修改', '更新', '调整', '变更', '重新配置'
+        ]
+        
+        lines = conversation_text.split('\n')
+        for i, line in enumerate(lines):
+            if any(keyword in line for keyword in config_keywords):
+                # 检查是否是重要配置变更
+                if len(line) > 25 and ('API' in line or '密钥' in line or '环境' in line):
+                    changes.append({
+                        'type': '配置变更',
+                        'content': line.strip(),
+                        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M')
+                    })
+        
+        return changes
+    
+    def _extract_api_decisions(self, conversation_text: str) -> List[Dict]:
+        """提取API相关决策"""
+        decisions = []
+        
+        # 检测API相关关键词
+        api_keywords = [
+            'API', '接口', '配额', '限制', '调用', '请求',
+            '百度', '高德', '地图', 'POI', '扫描', '热力图'
+        ]
+        
+        lines = conversation_text.split('\n')
+        for i, line in enumerate(lines):
+            if any(keyword in line for keyword in api_keywords):
+                # 检查是否是API相关决策
+                if len(line) > 20 and ('配额' in line or '限制' in line or '调用' in line):
+                    decisions.append({
+                        'type': 'API决策',
+                        'content': line.strip(),
+                        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M')
+                    })
+        
+        return decisions
+    
+    def _save_key_points_to_memory_md(self, key_points: List[Dict]) -> None:
+        """将关键信息保存到根目录的memory.md文件"""
+        # 确保根目录存在
+        root_dir = Path(__file__).parent.parent.parent
+        memory_file = root_dir / "memory.md"
+        
+        # 创建或追加到memory.md文件
+        with open(memory_file, 'a', encoding='utf-8') as f:
+            # 写入会话分隔符
+            f.write(f"\n## 会话摘要 - {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n")
+            
+            # 写入关键信息点
+            for point in key_points:
+                f.write(f"- **{point['type']}**: {point['content']}  \n")
+                f.write(f"  *{point['timestamp']}*\n\n")
+            
+            # 写入分隔线
+            f.write("---\n\n")
+    
+    def handle_saveagg_command(self) -> str:
+        """处理SAVEAGG命令 - 手动触发关键信息保存"""
+        try:
+            self._extract_and_persist_key_information()
+            return "✅ 关键信息已保存到memory.md文件"
+        except Exception as e:
+            return f"❌ 保存失败: {e}"
+    
+    def handle_loadagg_command(self) -> str:
+        """处理LOADAGG命令 - 从memory.md加载关键信息"""
+        try:
+            root_dir = Path(__file__).parent.parent.parent
+            memory_file = root_dir / "memory.md"
+            
+            if not memory_file.exists():
+                return "ℹ️ memory.md文件不存在，无关键信息可加载"
+            
+            # 读取最近的关键信息
+            with open(memory_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # 提取最近3次会话的关键信息
+            sessions = content.split('## 会话摘要 - ')[-3:]  # 最近3次会话
+            recent_info = "\n\n# 🧠 最近关键信息（免疫Trae压缩）\n\n"
+            
+            for session in sessions:
+                if session.strip():
+                    recent_info += f"## {session.strip()}\n\n"
+            
+            return recent_info if recent_info.strip() else "ℹ️ 无最近关键信息"
+            
+        except Exception as e:
+            return f"❌ 加载失败: {e}"
